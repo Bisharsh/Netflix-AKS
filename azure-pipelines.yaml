@@ -1,0 +1,12 @@
+trigger: none
+
+variables:
+  image-name: "ubuntu-lastest"
+
+pool: 
+  vmImage: $(image-name)
+
+stages:
+  - 
+
+
