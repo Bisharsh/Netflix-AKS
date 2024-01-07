@@ -1,13 +1,56 @@
 trigger: none
-
+ 
 variables:
-  image-name: "ubuntu-lastest"
-
-pool: 
-  vmImage: $(image-name)
-
+  IMAGE_REPO: 'acrsepttraining'
+  IMAGE_TAG: latest
+  ACR_CONNECTION: 'hb-acr-svc'
+  DOCKERFILE_PATH: '$(System.DefaultWorkingDirectory)/Dockerfile'
+  ACRSECRET: acrk8auth
+ 
+pool:
+  vmImage: ubuntu-latest
+ 
 stages:
-  - 
-
-
-
+  - stage: Build_Image
+    jobs:
+     - job: buildAndPush
+       displayName: Build and push docker image to ACR
+       steps:
+       - task: Docker@2
+         displayName: 'Docker build and push an image to container registry'
+         inputs:
+           containerRegistry: '$(ACR_CONNECTION)'
+           repository: '$(IMAGE_REPO)'
+           command: 'buildAndPush'
+           Dockerfile: '$(DOCKERFILE_PATH)'
+           tags: '$(IMAGE_TAG)'
+ 
+  - stage: Deploy
+    jobs:
+     - job: Publish_Artifacts
+       displayName: Publish Kube config files to artifacts
+       steps:
+       - task: PublishPipelineArtifact@1
+         inputs:
+           targetPath: '$(Pipeline.Workspace)/s/aks_deploy'
+           artifact: 'manifests'
+           publishLocation: 'pipeline'
+ 
+     - job: Download_and_Deploy
+       dependsOn: Publish_Artifacts
+       condition: succeeded()
+       displayName: Download Manifests and deploy to AKS
+       steps:
+       - task: DownloadPipelineArtifact@2
+         inputs:
+           buildType: 'current'
+           artifactName: 'manifests'
+           targetPath: '$(Pipeline.Workspace)/manifests'
+ 
+       - task: KubernetesManifest@1
+         inputs:
+           action: 'deploy'
+           connectionType: 'kubernetesServiceConnection'
+           kubernetesServiceConnection: 'hb-aks-svc'
+           namespace: 'default'
+           manifests: '$(Pipeline.Workspace)/manifests/k8manifest.yml'

@@ -1,13 +1,100 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+ 
 trigger: none
-
+ 
 variables:
-  image-name: "ubuntu-lastest"
-
-pool: 
-  vmImage: $(image-name)
-
+  backendrg: 'backend-rg'
+  backendsa: 'backendbsa'
+  backendcontainer: 'backend-container'
+  backendkey: 'devpipeline.terraform.tfstate'
+ 
+pool:
+  vmImage: ubuntu-latest
+ 
 stages:
-  - 
-
-
-
+  - stage: delete_cached_files
+    jobs:
+     - job: delete_cached_files
+       steps:
+       - task: Bash@3
+         displayName: search and delete the cached terraform files
+         inputs:
+           targetType: 'inline'
+           script: 'find . -name .terraform.lock.hcl -exec rm -rf {} \;'
+           workingDirectory: 'terraform'
+ 
+  - stage: tfvalidate
+    jobs:
+     - job: validate
+       continueOnError: false
+       steps:
+        - task: TerraformInstaller@1
+          displayName: tfinstall
+          inputs:
+            terraformVersion: 'latest'
+        - task: TerraformTaskV4@4
+          displayName: init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: 'terraform'
+            backendServiceArm: 'azure-svc'
+            backendAzureRmResourceGroupName: '$(backendrg)'
+            backendAzureRmStorageAccountName: '$(backendsa)'
+            backendAzureRmContainerName: '$(backendcontainer)'
+            backendAzureRmKey: '$(backendkey)'
+ 
+        - task: TerraformTaskV4@4
+          displayName: validate
+          inputs:
+            provider: 'azurerm'
+            command: 'validate'
+            workingDirectory: 'terraform'
+ 
+  - stage: tfdeploy
+    condition: succeeded('tfvalidate')
+    dependsOn: tfvalidate
+    jobs:
+      - job: apply
+        steps:
+        - task: TerraformInstaller@1
+          displayName: tfinstall
+          inputs:
+            terraformVersion: 'latest'
+        - task: TerraformTaskV4@4
+          displayName: init
+          inputs:
+            provider: 'azurerm'
+            command: 'init'
+            workingDirectory: 'terraform'
+            backendServiceArm: 'azure-svc'
+            backendAzureRmResourceGroupName: '$(backendrg)'
+            backendAzureRmStorageAccountName: '$(backendsa)'
+            backendAzureRmContainerName: '$(backendcontainer)'
+            backendAzureRmKey: '$(backendkey)'
+ 
+        - task: TerraformTaskV4@4
+          displayName: plan
+          inputs:
+            provider: 'azurerm'
+            command: 'plan'
+            workingDirectory: 'terraform'
+            environmentServiceNameAzureRM: 'azure-svc'
+ 
+        - task: TerraformTaskV4@4
+          displayName: apply
+          inputs:
+            provider: 'azurerm'
+            command: 'apply'
+            workingDirectory: 'terraform'
+            environmentServiceNameAzureRM: 'azure-svc'
+ 
+  # - stage: buildstage
+  #   jobs:
+  #   - job: buildjob
+  #     displayName: 'BUILD STAGE'
+  #     steps:
+  #       - template: ../templates/azure-pipelines-dockerjobs.yml
