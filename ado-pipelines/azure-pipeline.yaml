@@ -1,9 +1,9 @@
 trigger: none
  
 variables:
-  IMAGE_REPO: 'acrsepttraining'
+  IMAGE_REPO: 'netflixacr'
   IMAGE_TAG: latest
-  ACR_CONNECTION: 'hb-acr-svc'
+  ACR_CONNECTION: 'netflix-acr-svc'
   DOCKERFILE_PATH: '$(System.DefaultWorkingDirectory)/Dockerfile'
   ACRSECRET: acrk8auth
  
@@ -32,7 +32,7 @@ stages:
        steps:
        - task: PublishPipelineArtifact@1
          inputs:
-           targetPath: '$(Pipeline.Workspace)/s/aks_deploy'
+           targetPath: '$(Pipeline.Workspace)/s/Kubernetes'
            artifact: 'manifests'
            publishLocation: 'pipeline'
  
@@ -51,6 +51,6 @@ stages:
          inputs:
            action: 'deploy'
            connectionType: 'kubernetesServiceConnection'
-           kubernetesServiceConnection: 'hb-aks-svc'
+           kubernetesServiceConnection: 'netflix-aks-svc'
            namespace: 'default'
            manifests: '$(Pipeline.Workspace)/manifests/k8manifest.yml'
