@@ -33,7 +33,7 @@ stages:
          inputs:
            targetType: 'inline'
            script: 'find . -name .terraform.lock.hcl -exec rm -rf {} \;'
-           workingDirectory: 'Netflix-AKS/Terraform/'
+           workingDirectory: 'Terraform/'
  
   - stage: tfvalidate
     jobs:
@@ -49,7 +49,7 @@ stages:
           inputs:
             provider: 'azurerm'
             command: 'init'
-            workingDirectory: 'Netflix-AKS/Terraform/'
+            workingDirectory: 'Terraform/'
             backendServiceArm: 'azure-svc'
             backendAzureRmResourceGroupName: '$(backendrg)'
             backendAzureRmStorageAccountName: '$(backendsa)'
@@ -61,7 +61,7 @@ stages:
           inputs:
             provider: 'azurerm'
             command: 'validate'
-            workingDirectory: 'Netflix-AKS/Terraform/'
+            workingDirectory: 'Terraform/'
  
   - stage: tfdeploy
     condition: succeeded('tfvalidate')
@@ -78,7 +78,7 @@ stages:
           inputs:
             provider: 'azurerm'
             command: 'init'
-            workingDirectory: 'Netflix-AKS/Terraform/'
+            workingDirectory: 'Terraform/'
             backendServiceArm: 'azure-svc'
             backendAzureRmResourceGroupName: '$(backendrg)'
             backendAzureRmStorageAccountName: '$(backendsa)'
@@ -90,7 +90,7 @@ stages:
           inputs:
             provider: 'azurerm'
             command: 'plan'
-            workingDirectory: 'Netflix-AKS/Terraform/'
+            workingDirectory: 'Terraform/'
             environmentServiceNameAzureRM: 'azure-svc'
  
         - task: TerraformTaskV4@4
@@ -98,7 +98,7 @@ stages:
           inputs:
             provider: 'azurerm'
             command: 'apply'
-            workingDirectory: 'Netflix-AKS/Terraform/'
+            workingDirectory: 'Terraform/'
             environmentServiceNameAzureRM: 'azure-svc'
  
   # - stage: buildstage
