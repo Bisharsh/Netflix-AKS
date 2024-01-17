@@ -15,9 +15,9 @@ pool:
   vmImage: ubuntu-latest
  
 stages:
-  - stage: delete_cached_files
+  - stage: files_list
     jobs:
-     - job: delete_cached_files
+     - job: files_list
        steps:
        - task: Bash@3
          inputs:
