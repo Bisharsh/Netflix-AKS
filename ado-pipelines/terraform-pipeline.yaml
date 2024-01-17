@@ -24,16 +24,16 @@ stages:
            targetType: 'inline'
            script: 'ls'
 
-  - stage: delete_cached_files
-    jobs:
-     - job: delete_cached_files
-       steps:
-       - task: Bash@3
-         displayName: search and delete the cached terraform files
-         inputs:
-           targetType: 'inline'
-           script: 'find . -name .terraform.lock.hcl -exec rm -rf {} \;'
-           workingDirectory: 'Terraform/'
+  # - stage: delete_cached_files
+  #   jobs:
+  #    - job: delete_cached_files
+  #      steps:
+  #      - task: Bash@3
+  #        displayName: search and delete the cached terraform files
+  #        inputs:
+  #          targetType: 'inline'
+  #          script: 'find . -name .terraform.lock.hcl -exec rm -rf {} \;'
+  #          workingDirectory: 'Terraform/'
  
   - stage: tfvalidate
     jobs:
