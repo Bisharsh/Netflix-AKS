@@ -20,6 +20,15 @@ stages:
      - job: delete_cached_files
        steps:
        - task: Bash@3
+         inputs:
+           targetType: 'inline'
+           script: 'ls'
+
+  - stage: delete_cached_files
+    jobs:
+     - job: delete_cached_files
+       steps:
+       - task: Bash@3
          displayName: search and delete the cached terraform files
          inputs:
            targetType: 'inline'
