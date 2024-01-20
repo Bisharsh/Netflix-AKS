@@ -1,4 +1,4 @@
-resource_group = "sept-training-rg"
+resource_group = "netflix-rg"
  
 location = "eastus"
  

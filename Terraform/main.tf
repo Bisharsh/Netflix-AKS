@@ -13,23 +13,23 @@ provider "azurerm" {
   }
 }
  
-resource "azurerm_resource_group" "h-rg" {
+resource "azurerm_resource_group" " netflix-rg" {
   name     = var.resource_group
   location = var.location
 }
  
 resource "azurerm_container_registry" "acr" {
-  name                = "septacr"
-  resource_group_name = azurerm_resource_group.h-rg.name
-  location            = azurerm_resource_group.h-rg.location
+  name                = " netflixacr"
+  resource_group_name = azurerm_resource_group. netflix-rg.name
+  location            = azurerm_resource_group. netflix-rg.location
   sku                 = "Premium"
 }
  
 resource "azurerm_kubernetes_cluster" "aks" {
-  name                = "septaks"
-  location            = azurerm_resource_group.h-rg.location
-  resource_group_name = azurerm_resource_group.h-rg.name
-  dns_prefix          = "haks"
+  name                = " netflixaks"
+  location            = azurerm_resource_group. netflix-rg.location
+  resource_group_name = azurerm_resource_group. netflix-rg.name
+  dns_prefix          = "netflix"
  
   default_node_pool {
     name       = "default"
