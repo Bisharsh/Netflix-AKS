@@ -1,4 +1,4 @@
-<div align="center">
+<!-- <div align="center">
   <img src="./public/assets/DevSecOps.png" alt="Logo" width="100%" height="100%">
 
   <br>
@@ -755,4 +755,10 @@ To deploy an application with ArgoCD, you can follow these steps, which I'll out
 **Phase 7: Cleanup**
 
 1. **Cleanup AWS EC2 Instances:**
-    - Terminate AWS EC2 instances that are no longer needed.
+    - Terminate AWS EC2 instances that are no longer needed. -->
+
+
+--------------------------------
+
+
+This project dives into building and deployment of a fully functional Netflix clone application to Azure Kubernetes Service using Azure DevOps (yaml pipelines) by following DevSecOps practices.
