@@ -2,18 +2,18 @@
 # Start with a minimal pipeline that you can customize to build and deploy your code.
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
- 
+
 trigger: none
- 
+
 variables:
   backendrg: 'backend-rg'
   backendsa: 'backendbsa'
   backendcontainer: 'backend-container'
   backendkey: 'devpipeline.terraform.tfstate'
- 
+
 pool:
   vmImage: ubuntu-latest
- 
+
 stages:
   - stage: files_list
     jobs:
@@ -34,7 +34,7 @@ stages:
   #          targetType: 'inline'
   #          script: 'find . -name .terraform.lock.hcl -exec rm -rf {} \;'
   #          workingDirectory: 'Terraform/'
- 
+
   - stage: tfvalidate
     jobs:
      - job: validate
@@ -50,19 +50,19 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: 'Terraform/'
-            backendServiceArm: 'azure-svc'
+            backendServiceArm: 'a-svc'
             backendAzureRmResourceGroupName: '$(backendrg)'
             backendAzureRmStorageAccountName: '$(backendsa)'
             backendAzureRmContainerName: '$(backendcontainer)'
             backendAzureRmKey: '$(backendkey)'
- 
+
         - task: TerraformTaskV4@4
           displayName: validate
           inputs:
             provider: 'azurerm'
             command: 'validate'
             workingDirectory: 'Terraform/'
- 
+
   - stage: tfdeploy
     condition: succeeded('tfvalidate')
     dependsOn: tfvalidate
@@ -79,28 +79,28 @@ stages:
             provider: 'azurerm'
             command: 'init'
             workingDirectory: 'Terraform/'
-            backendServiceArm: 'azure-svc'
+            backendServiceArm: 'a-svc'
             backendAzureRmResourceGroupName: '$(backendrg)'
             backendAzureRmStorageAccountName: '$(backendsa)'
             backendAzureRmContainerName: '$(backendcontainer)'
             backendAzureRmKey: '$(backendkey)'
- 
+
         - task: TerraformTaskV4@4
           displayName: plan
           inputs:
             provider: 'azurerm'
             command: 'plan'
             workingDirectory: 'Terraform/'
-            environmentServiceNameAzureRM: 'azure-svc'
- 
+            environmentServiceNameAzureRM: 'a-svc'
+
         - task: TerraformTaskV4@4
           displayName: apply
           inputs:
             provider: 'azurerm'
             command: 'apply'
             workingDirectory: 'Terraform/'
-            environmentServiceNameAzureRM: 'azure-svc'
- 
+            environmentServiceNameAzureRM: 'a-svc'
+
   # - stage: buildstage
   #   jobs:
   #   - job: buildjob
