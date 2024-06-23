@@ -1,0 +1,98 @@
+name: Netflix Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      SCANNER_HOME: /usr/local/bin/sonar-scanner
+      TMDB_V3_API_KEY: ${{ secrets.TMDB_V3_API_KEY }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      KUBECONFIG: ${{ secrets.KUBECONFIG }}
+
+    steps:
+    - name: Clean workspace
+      run: rm -rf $GITHUB_WORKSPACE/*
+
+    - name: Checkout from Git
+      uses: actions/checkout@v2
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: 17
+
+    - name: Set up Node.js 16
+      uses: actions/setup-node@v3
+      with:
+        node-version: 16
+
+    - name: SonarQube Analysis
+      env:
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        $SCANNER_HOME/bin/sonar-scanner -Dsonar.projectName=Netflix -Dsonar.projectKey=Netflix
+
+    - name: Quality Gate
+      run: |
+        sonar-quality-gate.sh
+      env:
+        SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+    - name: Install Dependencies
+      run: npm install
+
+    - name: OWASP Dependency Check
+      run: dependency-check --scan ./ --disableYarnAudit --disableNodeAudit
+
+    - name: Publish OWASP Dependency Check Report
+      uses: actions/upload-artifact@v3
+      with:
+        name: dependency-check-report
+        path: '**/dependency-check-report.xml'
+
+    - name: TRIVY FS Scan
+      run: trivy fs . > trivyfs.txt
+
+    - name: Docker Build & Push
+      run: |
+        echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin
+        docker build --build-arg TMDB_V3_API_KEY=$TMDB_V3_API_KEY -t netflix .
+        docker tag netflix $DOCKERHUB_USERNAME/netflix:latest
+        docker push $DOCKERHUB_USERNAME/netflix:latest
+
+    - name: TRIVY Image Scan
+      run: trivy image $DOCKERHUB_USERNAME/netflix:latest > trivyimage.txt
+
+    - name: Deploy to Container
+      run: docker run -d -p 8081:80 $DOCKERHUB_USERNAME/netflix:latest
+
+    - name: Deploy to Kubernetes
+      run: |
+        echo $KUBECONFIG > $HOME/.kube/config
+        kubectl apply -f Kubernetes/deployment.yml
+        kubectl apply -f Kubernetes/service.yml
+
+    - name: Send Email Notification
+      uses: dawidd6/action-send-mail@v3
+      with:
+        server_address: smtp.example.com
+        server_port: 587
+        username: ${{ secrets.EMAIL_USERNAME }}
+        password: ${{ secrets.EMAIL_PASSWORD }}
+        subject: 'Build ${{ github.run_number }} - ${{ job.status }}'
+        body: |
+          Project: Netflix Clone
+          Build Number: ${{ github.run_number }}
+          URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        to: iambatmanthegoat@gmail.com
+        attachments: trivyfs.txt, trivyimage.txt
